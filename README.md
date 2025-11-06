@@ -20,8 +20,6 @@ It features smooth animations, dynamic UI elements, score popups, and an elegant
 
 * **Language:** C++17
 * **Graphics Library:** SFML 2.6.1 (GCC 14.2.0 MinGW SEH 64-bit)
-* **IDE/Editor:** Visual Studio Code
-* **Compiler:** MinGW-w64 (ucrt-posix-seh) 14.2.0
 
 ---
 
@@ -49,7 +47,7 @@ C:\SFML
 In your terminal:
 
 ```bash
-g++ main.cpp snake.cpp food.cpp ui.cpp -IC:/SFML/include -LC:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system -o app.exe
+g++ main.cpp snake.cpp food.cpp ui.cpp -IC:/SFML/include -LC:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system -o project2.exe
 ```
 
 ### 4️⃣ Copy Required DLLs
@@ -60,12 +58,12 @@ Copy all `.dll` files from:
 C:\SFML\bin
 ```
 
-into your project folder (same directory as `app.exe`).
+into your project folder (same directory as `project2.exe`).
 
 ### 5️⃣ Run the Game
 
 ```bash
-app.exe
+project2.exe
 ```
 
 ---
@@ -82,7 +80,6 @@ Reptile-rush/
 ├── snake.hpp          # Snake class declarations
 ├── food.hpp           # Food class declarations
 ├── ui.hpp             # UI element structure
-├── assets/            # (optional) fonts, images
 ├── README.md          # Project documentation
 ```
 
