@@ -15,7 +15,9 @@ int main() {
 
     const int blockSize = 20;
     const int gridSize = 30; // 600x600 grid
-    int score = 0;
+    const int numPlayers = 2;
+    int score[numPlayers] = {0, 0};
+    int loser = -1;
     int foodsEaten = 0;
     float speed = 0.15f; // faster initial speed
     bool isPaused = false;
@@ -30,12 +32,13 @@ int main() {
     window.setView(view);
 
     // ---------- Snake ----------
-    std::vector<sf::RectangleShape> snake;
+    std::vector<sf::RectangleShape> snake[numPlayers];
+    for (int p = 0; p < numPlayers; p++)
     for (int i = 0; i < 3; i++) {
         sf::RectangleShape seg(sf::Vector2f(blockSize, blockSize));
         seg.setFillColor(sf::Color(0, 180 - i*40, 0));
-        seg.setPosition(blockSize * (gridSize / 2 - i), blockSize * (gridSize / 2));
-        snake.push_back(seg);
+        seg.setPosition(blockSize * (gridSize / 2 + (p ? i : -i)), blockSize * (gridSize / 2 + (p ? 5 : -5)));
+        snake[p].push_back(seg);
     }
 
     // ---------- Food ----------
@@ -80,7 +83,7 @@ int main() {
 
     // ---------- Direction ----------
     enum Direction { Up, Down, Left, Right };
-    Direction dir = Right;
+    Direction dir[numPlayers] = { Right, Left };
 
     while (window.isOpen()) {
         sf::Event event;
@@ -100,12 +103,14 @@ int main() {
                 if (playButton.getGlobalBounds().contains(mPos)) isPaused = false;
                 if (restartButton.getGlobalBounds().contains(mPos)) {
                     // Reset everything
-                    snake.clear();
+                    for (int p = 0; p < numPlayers; p++)
+                    snake[p].clear();
+                    for (int p = 0; p < numPlayers; p++)
                     for (int i = 0; i < 3; i++) {
                         sf::RectangleShape seg(sf::Vector2f(blockSize, blockSize));
                         seg.setFillColor(sf::Color(0, 180 - i*40, 0));
-                        seg.setPosition(blockSize * (gridSize / 2 - i), blockSize * (gridSize / 2));
-                        snake.push_back(seg);
+                        seg.setPosition(blockSize * (gridSize / 2 + (p ? i : -i)), blockSize * (gridSize / 2 + (p ? 5 : -5)));
+                        snake[p].push_back(seg);
                     }
                     food.setPosition((rand() % gridSize) * blockSize, (rand() % gridSize) * blockSize);
                     bonusActive = false;
@@ -116,10 +121,11 @@ int main() {
                         obs.setPosition((rand() % gridSize) * blockSize, (rand() % gridSize) * blockSize);
                         obstacles.push_back(obs);
                     }
-                    score = 0;
+                    score[0] = score[1] = 0;
+                    loser = -1;
                     foodsEaten = 0;
                     speed = 0.15f; // reset initial speed
-                    dir = Right;
+                    dir[0] = Right; dir[1] = Left;
                     isPaused = false;
                     isGameOver = false;
                     popups.clear();
@@ -137,10 +143,14 @@ int main() {
 
         // Direction input
         if (!isPaused && !isGameOver) {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && dir != Down) dir = Up;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && dir != Up) dir = Down;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && dir != Right) dir = Left;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && dir != Left) dir = Right;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && dir[0] != Down) dir[0] = Up;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && dir[0] != Up) dir[0] = Down;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && dir[0] != Right) dir[0] = Left;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && dir[0] != Left) dir[0] = Right;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && dir[1] != Down) dir[1] = Up;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && dir[1] != Up) dir[1] = Down;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && dir[1] != Right) dir[1] = Left;
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && dir[1] != Left) dir[1] = Right;
         }
 
         // Movement timer
@@ -148,25 +158,26 @@ int main() {
         if (!isPaused && !isGameOver && moveTimer >= speed) {
             moveTimer = 0;
 
-            for (int i = snake.size()-1; i > 0; i--)
-                snake[i].setPosition(snake[i-1].getPosition());
+            for (int p = 0; p < numPlayers; p++) {
+            for (int i = snake[p].size()-1; i > 0; i--)
+                snake[p][i].setPosition(snake[p][i-1].getPosition());
 
-            sf::Vector2f headPos = snake[0].getPosition();
-            switch(dir) {
+            sf::Vector2f headPos = snake[p][0].getPosition();
+            switch(dir[p]) {
                 case Up: headPos.y -= blockSize; break;
                 case Down: headPos.y += blockSize; break;
                 case Left: headPos.x -= blockSize; break;
                 case Right: headPos.x += blockSize; break;
             }
-            snake[0].setPosition(headPos);
+            snake[p][0].setPosition(headPos);
 
             // Collision with food
-            if (snake[0].getGlobalBounds().intersects(food.getGlobalBounds())) {
+            if (snake[p][0].getGlobalBounds().intersects(food.getGlobalBounds())) {
                 sf::RectangleShape newSeg(sf::Vector2f(blockSize, blockSize));
                 newSeg.setFillColor(sf::Color(0, 120, 0));
-                newSeg.setPosition(snake[snake.size()-1].getPosition());
-                snake.push_back(newSeg);
-                score += 10;
+                newSeg.setPosition(snake[p][snake[p].size()-1].getPosition());
+                snake[p].push_back(newSeg);
+                score[p] += 10;
                 foodsEaten++;
 
                 // Score popup
@@ -197,8 +208,8 @@ int main() {
             }
 
             // Collision with bonus food
-            if (bonusActive && snake[0].getGlobalBounds().intersects(bonusFood.getGlobalBounds())) {
-                score += 50;
+            if (bonusActive && snake[p][0].getGlobalBounds().intersects(bonusFood.getGlobalBounds())) {
+                score[p] += 50;
                 bonusActive = false;
 
                 ScorePopup popup;
@@ -217,18 +228,24 @@ int main() {
             }
 
             // Collision with tail
-            for (size_t i = 1; i < snake.size(); i++)
-                if (snake[0].getPosition() == snake[i].getPosition())
-                    isGameOver = true;
+            for (size_t i = 1; i < snake[p].size(); i++)
+                if (snake[p][0].getPosition() == snake[p][i].getPosition())
+                    { isGameOver = true; loser = p; }
+
+            // Collision with the other snake
+            for (size_t i = 0; i < snake[1-p].size(); i++)
+                if (snake[p][0].getPosition() == snake[1-p][i].getPosition())
+                    { isGameOver = true; loser = p; }
 
             // Collision with walls
             if (headPos.x < 0 || headPos.x >= gridSize*blockSize || headPos.y < 0 || headPos.y >= gridSize*blockSize)
-                isGameOver = true;
+                { isGameOver = true; loser = p; }
 
             // Collision with obstacles
             for (size_t i = 0; i < obstacles.size(); i++)
-                if (snake[0].getGlobalBounds().intersects(obstacles[i].getGlobalBounds()))
-                    isGameOver = true;
+                if (snake[p][0].getGlobalBounds().intersects(obstacles[i].getGlobalBounds()))
+                    { isGameOver = true; loser = p; }
+            }
         }
 
         // ---------- Draw ----------
@@ -248,21 +265,24 @@ int main() {
         for (size_t i =0;i<obstacles.size();i++) window.draw(obstacles[i]);
 
         // Snake with gradient
-        for (size_t i=0;i<snake.size();i++){
+        for (int p = 0; p < numPlayers; p++)
+        for (size_t i=0;i<snake[p].size();i++){
             int greenValue = 180 - (int)i*30;
             if (greenValue<50) greenValue = 50;
-            snake[i].setFillColor(sf::Color(0, greenValue, 0));
-            window.draw(snake[i]);
+            snake[p][i].setFillColor(p ? sf::Color(greenValue, 0, 0) : sf::Color(0, greenValue, 0));
+            window.draw(snake[p][i]);
         }
 
         // Snake eyes
-        sf::Vector2f headPos = snake[0].getPosition();
+        for (int p = 0; p < numPlayers; p++) {
+        sf::Vector2f headPos = snake[p][0].getPosition();
         sf::CircleShape eye1(3), eye2(3), pupil1(1), pupil2(1);
         eye1.setFillColor(sf::Color::White); eye2.setFillColor(sf::Color::White);
         pupil1.setFillColor(sf::Color::Black); pupil2.setFillColor(sf::Color::Black);
         eye1.setPosition(headPos.x+4, headPos.y+4); eye2.setPosition(headPos.x+blockSize-8, headPos.y+4);
         pupil1.setPosition(eye1.getPosition().x+1, eye1.getPosition().y+1); pupil2.setPosition(eye2.getPosition().x+1, eye2.getPosition().y+1);
         window.draw(eye1); window.draw(eye2); window.draw(pupil1); window.draw(pupil2);
+        }
 
         // Food
         window.draw(food);
@@ -275,7 +295,7 @@ int main() {
 
         // Score
         std::stringstream ss;
-        ss << "Score: " << score;
+        ss << "P1: " << score[0] << "    P2: " << score[1];
         scoreText.setString(ss.str());
         window.draw(scoreText);
 
@@ -297,7 +317,7 @@ int main() {
             sf::Text goText("", font, 40);
             goText.setFillColor(sf::Color::Red);
             std::stringstream ss2;
-            ss2 << "Game Over!\nScore: " << score;
+            ss2 << "Game Over!\nPlayer " << (loser+1) << " lost\nP1: " << score[0] << "  P2: " << score[1];
             goText.setString(ss2.str());
             goText.setPosition(600/4, 600/2 - 50);
             window.draw(goText);
