@@ -47,7 +47,7 @@ C:\SFML
 In your terminal:
 
 ```bash
-g++ main.cpp snake.cpp food.cpp ui.cpp -IC:/SFML/include -LC:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system -o project2.exe
+g++ main.cpp snake.cpp food.cpp food_position.cpp ui.cpp -IC:/SFML/include -LC:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system -o project2.exe
 ```
 
 ### 4️⃣ Copy Required DLLs
