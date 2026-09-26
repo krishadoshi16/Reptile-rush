@@ -2,8 +2,14 @@
 #include <cstdlib>
 
 void initFood(sf::CircleShape& food, int gridSize, int blockSize) {
+    RandomFoodPositionSource positionSource;
+    initFood(food, gridSize, blockSize, positionSource);
+}
+
+void initFood(sf::CircleShape& food, int gridSize, int blockSize, FoodPositionSource& positionSource) {
     food.setFillColor(sf::Color::Red);
-    food.setPosition((rand() % gridSize) * blockSize, (rand() % gridSize) * blockSize);
+    const FoodCell cell = selectFoodCell(positionSource, gridSize);
+    food.setPosition(cell.x * blockSize, cell.y * blockSize);
 }
 
 void initBonusFood(sf::CircleShape& bonusFood) {
@@ -18,5 +24,5 @@ void initObstacles(std::vector<sf::RectangleShape>& obstacles, int gridSize, int
         obs.setFillColor(sf::Color(139, 69, 19));
         obs.setPosition((rand() % gridSize) * blockSize, (rand() % gridSize) * blockSize);
         obstacles.push_back(obs);
-    }
+    }
 }
